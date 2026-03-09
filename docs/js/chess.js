@@ -118,7 +118,7 @@ class ChessBoard {
       this.board[0] = [ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK].map(p => BLACK * p);
 
       this.whoseMove = WHITE;  // White to move
-      this.computerIs = WHITE; // Computer plays white by default
+      this.computerIs = BLACK; // Computer plays black by default
     } else {
       this.board = orig.board.map(row => [...row]);
       this.whoseMove = orig.whoseMove;
@@ -147,7 +147,7 @@ class ChessBoard {
 
   // Apply a move (assumed legal) and switch turn
   doMove(move) {
-    if (move.length === 0) { // pass equivalent? In chess we treat as resign? But we'll handle separately
+    if (move.length === 0) {
       this.pass();
       return true;
     }
@@ -168,8 +168,6 @@ class ChessBoard {
   }
 
   pass() {
-    // In chess, pass is not a legal move, but we use it to resign or new game.
-    // We'll treat it as switching turn only if no legal moves? Actually handled elsewhere.
     this.whoseMove = -this.whoseMove;
   }
 
@@ -297,7 +295,7 @@ class ChessBoard {
       for (let x = 0; x < 8; x++) {
         const p = this.board[y][x];
         if (pieceColor(p) !== opponent) continue;
-        const moves = this.pseudoLegalMovesForPiece(x, y, opponent, true); // without check validation to avoid recursion
+        const moves = this.pseudoLegalMovesForPiece(x, y, opponent, true);
         for (const move of moves) {
           if (move[2] === kingX && move[3] === kingY) return true;
         }
@@ -357,14 +355,11 @@ class ChessBoard {
         const type = pieceType(piece);
         const color = pieceColor(piece);
         const material = MATERIAL[type];
-        const squareIdx = y * 8 + x; // 0-based from top-left
+        const squareIdx = y * 8 + x;
         let positional = PIECE_SQUARE_TABLES[type][squareIdx];
-        // For black, we need to flip the table (since tables are from white's perspective)
         if (color === BLACK) {
-          // Flip vertically (mirror rank)
           const flippedIdx = (7 - y) * 8 + x;
           positional = PIECE_SQUARE_TABLES[type][flippedIdx];
-          // Also positional bonus is from black's perspective, so subtract for white
           positional = -positional;
         }
         score += (material + positional) * (color === WHITE ? 1 : -1);
@@ -373,17 +368,14 @@ class ChessBoard {
     return score;
   }
 
-  // For compatibility with AI search: score() returns evaluation from white's perspective.
   score() {
     return this.evaluate();
   }
 
-  // Generate ordered best moves for AI, with optional promote (first move to consider)
   bestMoves(promote) {
     const moves = this.legalMoves(this.whoseMove);
-    if (moves.length === 0) return [[]]; // pass-like
+    if (moves.length === 0) return [[]];
 
-    // If promote is given, put that move first
     let result = [];
     if (promote) {
       const idx = moves.findIndex(m => m[0]===promote[0] && m[1]===promote[1] && m[2]===promote[2] && m[3]===promote[3]);
@@ -393,7 +385,6 @@ class ChessBoard {
       }
     }
 
-    // Sort remaining moves by simple heuristic: captures first, then by piece-square value
     moves.sort((a, b) => {
       const scoreA = this.moveHeuristic(a);
       const scoreB = this.moveHeuristic(b);
@@ -407,10 +398,8 @@ class ChessBoard {
     const [fx, fy, tx, ty] = move;
     const target = this.board[ty][tx];
     if (target !== EMPTY) {
-      // Capturing: value of captured piece minus value of moving piece (rough)
       return MATERIAL[pieceType(target)] * 10 - MATERIAL[pieceType(this.board[fy][fx])];
     }
-    // Otherwise use positional bonus
     const piece = this.board[fy][fx];
     const type = pieceType(piece);
     const squareIdx = ty * 8 + tx;
@@ -422,7 +411,6 @@ class ChessBoard {
     return pos;
   }
 
-  // Count pieces (for UI)
   countPieces() {
     let white = 0, black = 0;
     for (let y = 0; y < 8; y++) {
@@ -437,7 +425,7 @@ class ChessBoard {
 }
 
 // ----------------------------------------------------------------------
-// AI search classes (adapted from Reversi but using ChessBoard)
+// AI search classes
 // ----------------------------------------------------------------------
 
 class Node {
@@ -470,7 +458,6 @@ class Node {
   better(s1, s2) {
     if (s1 === null) return false;
     if (s2 === null) return true;
-    // Since score() returns from white perspective, we want higher for white's turn, lower for black's
     return this.board.whoseMove === WHITE ? s1 > s2 : s1 < s2;
   }
 
@@ -479,7 +466,7 @@ class Node {
       this.best = score;
       this.bestSeq = [move, ...(seq || [])];
       if (this.adverse !== null && !this.better(this.adverse, score)) {
-        this.childMoves.length = 0; // prune
+        this.childMoves.length = 0;
       }
     }
   }
@@ -548,7 +535,6 @@ class SearchSpace {
       }
       this.stacks = [newStack];
     } else {
-      // For human turn, we still might precompute? Not needed.
       this.stacks = [];
     }
     this.currentStack = 0;
@@ -595,7 +581,7 @@ let selectedSquare = null;
 
 // URL params
 const params = new URLSearchParams(window.location.search);
-const easy = params.has('easy'); // not used in chess
+const easy = params.has('easy');
 const small = params.has('small');
 const playwhite = params.has('white');
 const notext = params.has('quiet');
@@ -622,16 +608,14 @@ const drawAll = (board) => {
       span.textContent = PIECE_EMOJI[piece] || ' ';
     }
     
-    // Kare rengini ayarla (açık/koyu)
-    const isLight = (x + y) % 2 === 0; // (0,0) a8 açık kare olsun
+    // Set square color (light/dark)
+    const isLight = (x + y) % 2 === 0;
     cell.classList.remove('light', 'dark');
     cell.classList.add(isLight ? 'light' : 'dark');
     
-    // Remove any selection highlight (but we'll handle with class)
     cell.classList.remove('selected');
   });
   
-  // Highlight selected square if any
   if (selectedSquare) {
     const [x, y] = selectedSquare;
     const cell = $(`#r${x}${y}`);
@@ -661,7 +645,6 @@ const drawText = (board) => {
 
   $('#undo').disabled = !undoStack.length;
 
-  // Determine game over
   const legalMoves = board.legalMoves(board.whoseMove);
   const isGameOver = legalMoves.length === 0;
   const inCheck = board.isCheck(board.whoseMove);
@@ -675,7 +658,7 @@ const drawText = (board) => {
     $('#pass').disabled = false;
   } else {
     $('#pass').textContent = 'Resign';
-    $('#pass').disabled = false; // Resign always available
+    $('#pass').disabled = false;
   }
 };
 
@@ -689,27 +672,23 @@ const pickPlayer = (p) => {
   startAI(mainBoard);
 };
 
-// Handle square click
 const doClick = (c) => {
-  if (mainBoard.computerIs === mainBoard.whoseMove) return; // computer's turn
+  if (mainBoard.computerIs === mainBoard.whoseMove) return;
 
   const [x, y] = c;
   const piece = mainBoard.state(c);
 
   if (selectedSquare === null) {
-    // No piece selected: if square has a piece of current player, select it
     if (piece !== EMPTY && pieceColor(piece) === mainBoard.whoseMove) {
       selectedSquare = c;
       drawAll(mainBoard);
     }
   } else {
-    // Piece selected: try to move
     const move = [selectedSquare[0], selectedSquare[1], x, y];
-    // Check if move is legal
     const legalMoves = mainBoard.legalMoves(mainBoard.whoseMove);
     const found = legalMoves.find(m =>
       m[0] === move[0] && m[1] === move[1] && m[2] === move[2] && m[3] === move[3] &&
-      (m.length === 4 || m[4] === QUEEN) // ignore promotion for comparison
+      (m.length === 4 || m[4] === QUEEN)
     );
     if (found) {
       const saved = new ChessBoard(mainBoard);
@@ -721,12 +700,10 @@ const doClick = (c) => {
         startAI(mainBoard);
       }
     } else {
-      // If clicked on own piece, change selection
       if (piece !== EMPTY && pieceColor(piece) === mainBoard.whoseMove) {
         selectedSquare = c;
         drawAll(mainBoard);
       } else {
-        // Deselect
         selectedSquare = null;
         drawAll(mainBoard);
       }
@@ -735,14 +712,12 @@ const doClick = (c) => {
 };
 
 const doPass = () => {
-  const counts = mainBoard.countPieces();
   const legalMoves = mainBoard.legalMoves(mainBoard.whoseMove);
   const isGameOver = legalMoves.length === 0;
 
   if (redoStack.length) {
     doRedo();
   } else if (isGameOver) {
-    // New game
     undoStack.push(new ChessBoard(mainBoard));
     redoStack.length = 0;
     mainBoard = new ChessBoard();
@@ -751,13 +726,16 @@ const doPass = () => {
     startAI(mainBoard);
     log('Starting new game');
   } else {
-    // Resign: treat as loss for current player, switch computer? For simplicity, just pass turn? But better: end game.
-    // We'll just do a pass (switch turns) but in chess it's illegal. Instead, we can force a win for opponent.
-    // Let's just make it resign: disable further moves and show message.
     log(`${colorName(mainBoard.whoseMove)} resigns`);
-    // For UI, we can just switch computer turn? But to keep simple, we'll treat as game over.
-    // We'll just do nothing for now.
-    alert('Resignation not implemented. Use New Game.');
+    // Simple resign: just start new game
+    if (confirm('Are you sure you want to resign?')) {
+      undoStack.push(new ChessBoard(mainBoard));
+      redoStack.length = 0;
+      mainBoard = new ChessBoard();
+      selectedSquare = null;
+      drawAll(mainBoard);
+      startAI(mainBoard);
+    }
   }
 };
 
@@ -799,8 +777,8 @@ const startAI = (board) => {
   stopTimers();
   ai.setBoard(board);
   if (board.whoseMove === board.computerIs) {
-    const remaining = board.countPieces()[2]; // empty squares
-    const ms = 500 + (64 - remaining) * 150; // similar timing
+    const remaining = board.countPieces()[2];
+    const ms = 500 + (64 - remaining) * 150;
     moveTimer = setTimeout(finishAI, ms);
     earlyTimer = setTimeout(earlyAI, 1000);
   }
@@ -835,7 +813,6 @@ const finishAI = () => {
   if (mainBoard.computerIs !== mainBoard.whoseMove) return;
   const bestMove = ai.bestMove();
   if (bestMove.length === 0) {
-    // No legal moves: game over
     log('Computer has no moves');
     drawText(mainBoard);
     return;
@@ -849,7 +826,7 @@ const finishAI = () => {
   startAI(mainBoard);
 };
 
-// Create board squares (with spans instead of images)
+// Create board squares
 const createBoard = () => {
   const boardEl = $('#board');
   // y'yi 7'den 0'a doğru azaltarak siyah taşların üstte olmasını sağla
@@ -891,9 +868,9 @@ const init = () => {
 
   // Set initial computer player based on URL param
   if (playwhite) {
-    mainBoard.computerIs = WHITE; // human plays white
+    mainBoard.computerIs = BLACK; // human plays white, computer black
   } else {
-    mainBoard.computerIs = BLACK; // human plays black by default
+    mainBoard.computerIs = WHITE; // human plays black, computer white
   }
 
   drawAll(mainBoard);
