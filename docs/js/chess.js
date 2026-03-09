@@ -621,9 +621,16 @@ const drawAll = (board) => {
     if (span) {
       span.textContent = PIECE_EMOJI[piece] || ' ';
     }
-    // Remove any selection highlight
+    
+    // Kare rengini ayarla (açık/koyu)
+    const isLight = (x + y) % 2 === 0; // (0,0) a8 açık kare olsun
+    cell.classList.remove('light', 'dark');
+    cell.classList.add(isLight ? 'light' : 'dark');
+    
+    // Remove any selection highlight (but we'll handle with class)
     cell.classList.remove('selected');
   });
+  
   // Highlight selected square if any
   if (selectedSquare) {
     const [x, y] = selectedSquare;

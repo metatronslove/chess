@@ -16,6 +16,9 @@
   --font-size-base: 1rem;
   --font-size-large: 2rem;
   --font-size-small: 0.75rem;
+  --light-square: #f0d9b5;  /* Açık kare rengi (bej) */
+  --dark-square: #b58863;   /* Koyu kare rengi (kahverengi) */
+  --selected-highlight: rgba(255, 255, 0, 0.4);
 }
 
 /* General styles */
@@ -64,11 +67,21 @@ footer a:hover {
 .rsquare {
   width: var(--square-size);
   height: var(--square-size);
-  border: var(--board-border);
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  /* Kenarlık yerine arkaplan renkleri kullanılacak */
+  border: none;
+}
+
+/* Açık ve koyu kareler için renkler */
+.rsquare.light {
+  background-color: var(--light-square);
+}
+
+.rsquare.dark {
+  background-color: var(--dark-square);
 }
 
 .rsquare span {
@@ -77,18 +90,14 @@ footer a:hover {
   justify-content: center;
   width: 100%;
   height: 100%;
-  font-size: var(--square-size);
+  font-size: calc(var(--square-size) * 0.8); /* Emoji boyutu kareye sığacak şekilde */
   line-height: var(--square-size);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Hafif gölge */
 }
 
 .rsquare.selected {
-  background-color: rgba(255, 255, 0, 0.3); /* Seçili kareyi vurgula */
-}
-
-.rsquare img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  background-color: var(--selected-highlight) !important; /* Seçili kareyi vurgula */
+  /* !important ile arkaplan rengini geçersiz kılar */
 }
 
 .small .board {
@@ -101,7 +110,7 @@ footer a:hover {
 }
 
 .small .rsquare span {
-  font-size: var(--small-square-size);
+  font-size: calc(var(--small-square-size) * 0.8);
   line-height: var(--small-square-size);
 }
 
