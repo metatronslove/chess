@@ -117,7 +117,7 @@ class ChessBoard {
       this.board[1] = Array(8).fill(BLACK * PAWN);
       this.board[0] = [ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK].map(p => BLACK * p);
 
-      this.whoseMove = BLACK;  // White to move
+      this.whoseMove = WHITE;  // White to move
       this.computerIs = WHITE; // Computer plays white by default
     } else {
       this.board = orig.board.map(row => [...row]);
