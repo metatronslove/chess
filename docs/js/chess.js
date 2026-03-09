@@ -891,9 +891,9 @@ const init = () => {
 
   // Set initial computer player based on URL param
   if (playwhite) {
-    mainBoard.computerIs = BLACK; // human plays white
+    mainBoard.computerIs = WHITE; // human plays white
   } else {
-    mainBoard.computerIs = WHITE; // human plays black by default
+    mainBoard.computerIs = BLACK; // human plays black by default
   }
 
   drawAll(mainBoard);
