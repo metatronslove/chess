@@ -118,7 +118,7 @@ class ChessBoard {
       this.board[0] = [ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK].map(p => BLACK * p);
 
       this.whoseMove = WHITE;  // White to move
-      this.computerIs = BLACK; // Computer plays black by default
+      this.computerIs = WHITE; // Computer plays black by default
     } else {
       this.board = orig.board.map(row => [...row]);
       this.whoseMove = orig.whoseMove;
@@ -852,7 +852,8 @@ const finishAI = () => {
 // Create board squares (with spans instead of images)
 const createBoard = () => {
   const boardEl = $('#board');
-  for (let y = 0; y < 8; y++) {
+  // y'yi 7'den 0'a doğru azaltarak siyah taşların üstte olmasını sağla
+  for (let y = 7; y >= 0; y--) {
     for (let x = 0; x < 8; x++) {
       const cell = document.createElement('div');
       cell.className = 'rsquare';
